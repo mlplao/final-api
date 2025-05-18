@@ -20,6 +20,28 @@ public class PostController {
         return ResponseEntity.ok(postRepository.findAll());
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<?> createPostsBulk(@RequestBody List<Post> posts) {
+        // Validate the request body
+        if (posts == null || posts.isEmpty()) {
+            return ResponseEntity.badRequest().body("The request body must contain a list of posts.");
+        }
+
+        // Set timestamps for each post
+        posts.forEach(post -> {
+            post.setCreatedAt(LocalDateTime.now());
+            post.setUpdatedAt(post.getCreatedAt());
+        });
+
+        // Save posts to the database
+        try {
+            List<Post> savedPosts = postRepository.saveAll(posts);
+            return new ResponseEntity<>(savedPosts, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while saving posts.");
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Post> getPostById(@PathVariable Long id) {
         return postRepository.findById(id)
